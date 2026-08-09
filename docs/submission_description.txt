@@ -1,0 +1,7 @@
+WHAT WE BUILT: A Cohort & Data Quality Explorer for MIMIC-IV data. A transparent NL cohort builder turns queries like "age over 65, diagnosis of sepsis" into structured filters with visible per-clause match counts. A quality scanner flags missing fields, duplicates, implausible values, and temporal inconsistencies with confidence scores, routed to a human review queue.
+
+PROBLEM: Hospital data spans many linked tables. Researchers waste time reconstructing context and can't tell if findings reflect real signal or dirty data.
+
+HOW IT WORKS: A deterministic rule-based baseline (required) is compared against an AI layer that fits statistics from the data itself (per-lab z-scores, time-window overlap, cross-table joins), abstaining when evidence is thin. Every flag traces to a rule or statistic.
+
+MORE TIME: Validate against real MIMIC-IV data (sandbox lacked PhysioNet access), broaden the NL grammar, get reviewed ground truth for a trustworthy precision estimate.
