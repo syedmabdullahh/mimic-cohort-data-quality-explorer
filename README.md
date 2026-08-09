@@ -70,14 +70,19 @@ graph TD
 | **Clinical Risk Context** | Technical column error message | **Clinical Impact Explainer**: Maps flags to Clinical Risk, Research Bias Risk, Risk Level, and Action. |
 | **Governance** | Manual spreadsheet checks | **Dataset Quality Index (0-100)** & 1-Click PDF Audit Report Export. |
 
+## 🌐 Live Web Application & Deployment
+
+- **Live HTML5/CSS3/JS Web Portal**: [https://web-production-d031ce.up.railway.app](https://web-production-d031ce.up.railway.app)
+- **GitHub Repository**: [https://github.com/syedmabdullahh/mimic-cohort-data-quality-explorer](https://github.com/syedmabdullahh/mimic-cohort-data-quality-explorer)
+
 ---
 
 ## 4. Quick Start & Installation
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/mimic-cohort-explorer.git
-cd mimic-cohort-explorer
+git clone https://github.com/syedmabdullahh/mimic-cohort-data-quality-explorer.git
+cd mimic-cohort-data-quality-explorer
 ```
 
 ### Step 2: Install Dependencies
