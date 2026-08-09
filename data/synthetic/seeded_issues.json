@@ -1,0 +1,50 @@
+[
+  {
+    "type": "duplicate_row",
+    "table": "admissions",
+    "subject_id": 10000004,
+    "hadm_id": 120000040
+  },
+  {
+    "type": "temporal_misalignment",
+    "table": "admissions",
+    "subject_id": 10000007,
+    "hadm_id": 120000070
+  },
+  {
+    "type": "missing_required_field",
+    "table": "admissions",
+    "subject_id": 10000009,
+    "hadm_id": 120000092,
+    "field": "admission_type"
+  },
+  {
+    "type": "implausible_value",
+    "table": "labevents",
+    "labevent_id": 21
+  },
+  {
+    "type": "implausible_value",
+    "table": "patients",
+    "subject_id": 10000031,
+    "field": "anchor_age"
+  },
+  {
+    "type": "temporal_misalignment",
+    "table": "transfers",
+    "transfer_id": 9
+  },
+  {
+    "type": "duplicate_row",
+    "table": "admissions",
+    "subject_id": 10000028,
+    "hadm_id": 120000280,
+    "note": "near-duplicate overlapping admission, not byte-identical"
+  },
+  {
+    "type": "temporal_misalignment",
+    "table": "transfers",
+    "transfer_id": 16,
+    "note": "transfer window outside parent admission window"
+  }
+]
