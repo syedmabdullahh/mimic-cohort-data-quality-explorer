@@ -1,0 +1,9 @@
+icd_code,icd_version,long_title
+A419,10,"Sepsis, unspecified organism"
+I509,10,"Heart failure, unspecified"
+N179,10,"Acute kidney failure, unspecified"
+J189,10,"Pneumonia, unspecified organism"
+E119,10,Type 2 diabetes mellitus without complications
+I10,10,Essential (primary) hypertension
+K7200,10,Acute and subacute hepatic failure without coma
+J449,10,"Chronic obstructive pulmonary disease, unspecified"
