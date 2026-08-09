@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIMIC-IV Cohort & Data Quality Explorer — Healthcare Analytics Platform</title>
+  <meta name="description" content="Explainable AI healthcare data quality platform for MIMIC-IV clinical data. Cohort building, outlier detection, and audit governance for clinical research.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<div class="app-layout">
+
+  <!-- ═══════════════════════════════════════════════════
+       SIDEBAR NAVIGATION
+       ═══════════════════════════════════════════════════ -->
+  <aside class="sidebar">
+
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-icon-box">
+        <i class="fa-solid fa-notes-medical"></i>
+      </div>
+      <div class="brand-text">
+        <h2>MIMIC Explorer</h2>
+        <span class="version-tag">AI Clinical Suite v2.5</span>
+      </div>
+    </div>
+
+    <!-- Demo Button -->
+    <div class="demo-wrapper">
+      <button id="btn-demo-mode" class="btn-demo">
+        <i class="fa-solid fa-bolt-lightning"></i>
+        <span>1-Click Judge Demo</span>
+      </button>
+    </div>
+
+    <div class="nav-divider">Navigation</div>
+
+    <!-- Nav Menu -->
+    <nav class="nav-menu">
+      <button class="nav-item active" data-tab="tab-overview">
+        <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+        <span>Executive Dashboard</span>
+      </button>
+      <button class="nav-item" data-tab="tab-cohort">
+        <span class="nav-icon"><i class="fa-solid fa-users-viewfinder"></i></span>
+        <span>Cohort Explorer</span>
+      </button>
+      <button class="nav-item" data-tab="tab-quality">
+        <span class="nav-icon"><i class="fa-solid fa-shield-halved"></i></span>
+        <span>AI Quality Center</span>
+      </button>
+      <button class="nav-item" data-tab="tab-review">
+        <span class="nav-icon"><i class="fa-solid fa-user-check"></i></span>
+        <span>Review Workspace</span>
+        <span class="badge" id="queue-count-badge">0</span>
+      </button>
+      <button class="nav-item" data-tab="tab-evaluation">
+        <span class="nav-icon"><i class="fa-solid fa-chart-bar"></i></span>
+        <span>Benchmark & Eval</span>
+      </button>
+      <button class="nav-item" data-tab="tab-reports">
+        <span class="nav-icon"><i class="fa-solid fa-file-chart-pie"></i></span>
+        <span>Reports & Insights</span>
+      </button>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <button id="btn-download-pdf-sidebar" class="btn-pdf-sidebar">
+        <i class="fa-solid fa-file-pdf"></i> Download Audit PDF
+      </button>
+      <div class="workspace-card">
+        <div class="ws-header">
+          <i class="fa-solid fa-database"></i>
+          <span>MIMIC-IV Workspace</span>
+        </div>
+        <div class="ws-path" id="ws-path-text">Initializing…</div>
+        <div class="status-pill" id="data-status-badge">
+          <span class="status-dot"></span>
+          Active Dataset
+        </div>
+      </div>
+    </div>
+
+  </aside><!-- /sidebar -->
+
+  <!-- ═══════════════════════════════════════════════════
+       MAIN CONTENT
+       ═══════════════════════════════════════════════════ -->
+  <main class="main-content">
+
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="top-title">
+        <h1>MIMIC-IV Cohort &amp; Data Quality Explorer</h1>
+        <p>Sofstica Hackathon 2026 &nbsp;·&nbsp; AI for Smarter Patient Care &nbsp;·&nbsp; Track 2 Prototype</p>
+      </div>
+      <div class="top-actions">
+        <span class="live-time" id="live-clock">--:--:--</span>
+        <span class="pill pill-cyan"><i class="fa-solid fa-atom"></i> Robust Z-Score Engine</span>
+        <span class="pill pill-amber"><i class="fa-solid fa-lock"></i> Immutable Audit</span>
+      </div>
+    </header>
+
+    <!-- Safety Notice -->
+    <div class="safety-alert">
+      <i class="fa-solid fa-triangle-exclamation alert-icon"></i>
+      <div>
+        <strong>Research &amp; Educational Prototype Only — Not for Clinical Use.</strong>
+        Do not use for diagnosis, treatment, triage, or emergency decisions. Data derived from MIMIC-IV Demo v2.2.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         TAB 0: EXECUTIVE DASHBOARD
+         ═══════════════════════════════════════════════════════ -->
+    <section id="tab-overview" class="tab-pane active">
+
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <div class="hero-content">
+          <div class="hero-eyebrow">
+            <i class="fa-solid fa-microchip"></i>
+            AI Clinical Data Audit Suite
+          </div>
+          <h2>Explainable AI for <span>Safe Healthcare</span> Data Exploration</h2>
+          <p>
+            Transforming complex multi-table MIMIC-IV EHR records into transparent clinical cohorts —
+            flagging corrupted, inconsistent, and duplicate records before they bias AI research models.
+          </p>
+          <div class="hero-buttons">
+            <button class="btn btn-primary btn-lg" onclick="document.querySelector('[data-tab=tab-quality]').click()">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Launch AI Quality Scanner
+            </button>
+            <button class="btn btn-ghost btn-lg" onclick="document.querySelector('[data-tab=tab-cohort]').click()">
+              <i class="fa-solid fa-users"></i> Build Cohort
+            </button>
+          </div>
+        </div>
+
+        <div class="hero-graphic">
+          <div class="score-ring-container">
+            <div class="score-ring-wrapper">
+              <svg class="score-ring-svg" width="140" height="140" viewBox="0 0 120 120">
+                <defs>
+                  <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#38bdf8"/>
+                    <stop offset="100%" stop-color="#a78bfa"/>
+                  </linearGradient>
+                </defs>
+                <circle class="score-ring-track" cx="60" cy="60" r="54"/>
+                <circle class="score-ring-fill" id="hero-ring-fill" cx="60" cy="60" r="54"/>
+              </svg>
+              <div class="score-ring-center">
+                <div class="score-ring-num" id="hero-score-val">—</div>
+                <div class="score-ring-label">Trust Index</div>
+              </div>
+            </div>
+            <div class="pill pill-cyan" style="font-size:0.72rem;">Dataset Quality</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card cyan" style="animation-delay:0.05s">
+          <div class="kpi-top">
+            <span class="kpi-label">Total Patients</span>
+            <span class="kpi-icon"><i class="fa-solid fa-hospital-user"></i></span>
+          </div>
+          <div class="kpi-value" id="kpi-total-patients">—</div>
+          <div class="kpi-sub">MIMIC-IV Demo dataset</div>
+          <div class="kpi-trend flat"><i class="fa-solid fa-minus"></i> Demo cohort</div>
+          <div class="kpi-progress"><div class="kpi-progress-fill" id="kpi-patients-bar" style="width:0%"></div></div>
+        </div>
+
+        <div class="kpi-card purple" style="animation-delay:0.10s">
+          <div class="kpi-top">
+            <span class="kpi-label">Total Issues Detected</span>
+            <span class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+          </div>
+          <div class="kpi-value" id="kpi-total-issues">—</div>
+          <div class="kpi-sub">Across all quality checks</div>
+          <div class="kpi-trend" id="kpi-issues-trend"><i class="fa-solid fa-minus"></i> Analyzing…</div>
+          <div class="kpi-progress"><div class="kpi-progress-fill" id="kpi-issues-bar" style="width:0%"></div></div>
+        </div>
+
+        <div class="kpi-card red" style="animation-delay:0.15s">
+          <div class="kpi-top">
+            <span class="kpi-label">High Risk Issues</span>
+            <span class="kpi-icon"><i class="fa-solid fa-circle-exclamation"></i></span>
+          </div>
+          <div class="kpi-value" id="kpi-high-risk">—</div>
+          <div class="kpi-sub">Critical &amp; high severity flags</div>
+          <div class="kpi-trend down" id="kpi-risk-trend"><i class="fa-solid fa-arrow-up"></i> Needs review</div>
+          <div class="kpi-progress"><div class="kpi-progress-fill" id="kpi-risk-bar" style="width:0%"></div></div>
+        </div>
+
+        <div class="kpi-card green" style="animation-delay:0.20s">
+          <div class="kpi-top">
+            <span class="kpi-label">Dataset Trust Score</span>
+            <span class="kpi-icon"><i class="fa-solid fa-shield-check"></i></span>
+          </div>
+          <div class="kpi-value" id="kpi-trust-score">—</div>
+          <div class="kpi-sub">Overall quality index / 100</div>
+          <div class="kpi-trend" id="kpi-trust-trend"><i class="fa-solid fa-minus"></i> Computing…</div>
+          <div class="kpi-progress"><div class="kpi-progress-fill" id="kpi-trust-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid-2">
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon cyan"><i class="fa-solid fa-chart-pie"></i></span>
+              <div>
+                <div class="card-title">Risk Distribution</div>
+                <div class="card-subtitle">Issues by severity level</div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container h-260">
+            <canvas id="riskDonutChart"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon purple"><i class="fa-solid fa-chart-column"></i></span>
+              <div>
+                <div class="card-title">Quality Score Breakdown</div>
+                <div class="card-subtitle">Component scores 0–100</div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container h-260">
+            <canvas id="qualityBreakdownChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Findings Summary + Platform Features -->
+      <div class="grid-2">
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon amber"><i class="fa-solid fa-brain"></i></span>
+              <div>
+                <div class="card-title">AI Findings Summary</div>
+                <div class="card-subtitle">Executive intelligence briefing</div>
+              </div>
+            </div>
+            <span class="pill pill-cyan" id="exec-findings-count">Loading…</span>
+          </div>
+          <div id="exec-findings-container">
+            <div class="empty-state" style="padding:24px 0">
+              <span class="empty-icon"><i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem;color:var(--text-muted)"></i></span>
+              <p>Loading AI insights…</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon cyan"><i class="fa-solid fa-route"></i></span>
+              <div>
+                <div class="card-title">Judge Walkthrough</div>
+                <div class="card-subtitle">Recommended demo sequence</div>
+              </div>
+            </div>
+          </div>
+          <ol class="step-list">
+            <li class="step-item">
+              <span class="step-num">1</span>
+              <div><strong>Click '1-Click Judge Demo'</strong> — Triggers all scans, scores, cohorts, and queues.</div>
+            </li>
+            <li class="step-item">
+              <span class="step-num">2</span>
+              <div><strong>Inspect 'AI Quality Center'</strong> — Review Quality Score Cards (0–100), risk badges, and MAD analysis.</div>
+            </li>
+            <li class="step-item">
+              <span class="step-num">3</span>
+              <div><strong>Test 'Cohort Explorer'</strong> — Query <code style="color:var(--cyan);font-size:0.82em">age over 65 and diagnosis of sepsis</code> to see patient tables.</div>
+            </li>
+            <li class="step-item">
+              <span class="step-num">4</span>
+              <div><strong>Use 'Review Workspace'</strong> — Accept or reject flags without mutating source CSV files.</div>
+            </li>
+            <li class="step-item">
+              <span class="step-num">5</span>
+              <div><strong>Export 'Audit PDF'</strong> — Download publication-ready audit report from Reports tab.</div>
+            </li>
+          </ol>
+
+          <div class="section-sep"></div>
+
+          <ul class="feature-list">
+            <li class="feature-item">
+              <span class="feature-check"><i class="fa-solid fa-check"></i></span>
+              <div><strong>NL Cohort Engine:</strong> Transparent query parser with explicit clause-match attrition.</div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-check"><i class="fa-solid fa-check"></i></span>
+              <div><strong>AI Quality Scanner:</strong> Outliers fit per lab item, near-duplicate overlap, and temporal drift.</div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-check"><i class="fa-solid fa-check"></i></span>
+              <div><strong>Clinical Impact Explainer:</strong> Risk Level, Clinical Impact, Research Impact, and Action for every flag.</div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-check"><i class="fa-solid fa-check"></i></span>
+              <div><strong>Quality Score Engine:</strong> Aggregated 0–100 Dataset Trust Index with component sub-scores.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </section><!-- /tab-overview -->
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         TAB 1: COHORT EXPLORER
+         ═══════════════════════════════════════════════════════ -->
+    <section id="tab-cohort" class="tab-pane">
+
+      <!-- Query Panel -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon cyan"><i class="fa-solid fa-magnifying-glass-chart"></i></span>
+            <div>
+              <div class="card-title">Natural-Language Cohort Query Builder</div>
+              <div class="card-subtitle">Transparent query engine — zero opaque hallucination, explicit clause matching</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="query-wrapper">
+          <div class="query-input-row">
+            <span class="query-icon"><i class="fa-solid fa-terminal"></i></span>
+            <input type="text" id="cohort-query-input" class="query-input"
+              value="age over 65 and diagnosis of sepsis"
+              placeholder="e.g. age over 65 and diagnosis of sepsis">
+            <button id="btn-run-query" class="btn btn-primary">
+              <i class="fa-solid fa-magnifying-glass"></i> Run Query
+            </button>
+          </div>
+          <div class="quick-presets">
+            <span class="preset-label">Quick Presets:</span>
+            <button class="preset-btn" onclick="setQuery('age over 60')">age over 60</button>
+            <button class="preset-btn" onclick="setQuery('gender female')">gender female</button>
+            <button class="preset-btn" onclick="setQuery('diagnosis of pneumonia')">diagnosis of pneumonia</button>
+            <button class="preset-btn" onclick="setQuery('died in hospital')">died in hospital</button>
+            <button class="preset-btn" onclick="setQuery('age over 65 and diagnosis of sepsis')">sepsis over 65</button>
+          </div>
+        </div>
+
+        <div id="unmatched-warning" class="inline-alert amber hidden">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span id="unmatched-text"></span>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card t-cyan">
+          <div class="stat-icon-box"><i class="fa-solid fa-user-group"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Matching Patients</div>
+            <div class="stat-value" id="metric-matched-count">0</div>
+            <div class="stat-sub">Cohort members</div>
+          </div>
+        </div>
+        <div class="stat-card t-purple">
+          <div class="stat-icon-box"><i class="fa-solid fa-database"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Dataset Patients</div>
+            <div class="stat-value" id="metric-total-count">0</div>
+            <div class="stat-sub">Total in MIMIC-IV</div>
+          </div>
+        </div>
+        <div class="stat-card t-green">
+          <div class="stat-icon-box"><i class="fa-solid fa-percent"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Inclusion Rate</div>
+            <div class="stat-value" id="metric-inclusion-rate">0%</div>
+            <div class="stat-sub">Cohort / Dataset</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clauses + Table -->
+      <div class="grid-2">
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon cyan"><i class="fa-solid fa-diagram-project"></i></span>
+              <div>
+                <div class="card-title">Interpreted Inclusion Clauses</div>
+                <div class="card-subtitle">Explicit parse trace — no hidden filtering</div>
+              </div>
+            </div>
+          </div>
+          <ul class="clause-list" id="clause-list-container">
+            <li class="clause-item">
+              <span class="clause-num">?</span>
+              <span class="clause-text text-muted">Run a cohort query above to see clause details…</span>
+            </li>
+          </ul>
+          <div class="chart-container h-200 mt-4">
+            <canvas id="cohortChart"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon purple"><i class="fa-solid fa-table"></i></span>
+              <div>
+                <div class="card-title">Matching Patient Records</div>
+              </div>
+            </div>
+            <span class="pill pill-grey" id="cohort-table-count">0 rows</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="cohort-results-table">
+              <thead>
+                <tr>
+                  <th>Subject ID</th>
+                  <th>Gender</th>
+                  <th>Anchor Age</th>
+                  <th>Anchor Year</th>
+                  <th>DOD</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="5" class="empty-cell">No cohort query executed yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section><!-- /tab-cohort -->
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         TAB 2: AI QUALITY CENTER
+         ═══════════════════════════════════════════════════════ -->
+    <section id="tab-quality" class="tab-pane">
+
+      <!-- Scanner Control -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon cyan"><i class="fa-solid fa-shield-halved"></i></span>
+            <div>
+              <div class="card-title">Dataset Quality Score Engine &amp; AI Scanner</div>
+              <div class="card-subtitle">Hardcoded rules vs. statistical robust Z-scores &amp; cross-table temporal checks</div>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <button id="btn-run-baseline" class="btn btn-secondary">
+              <i class="fa-solid fa-play"></i> Run Baseline
+            </button>
+            <button id="btn-run-ai" class="btn btn-primary">
+              <i class="fa-solid fa-bolt"></i> Run AI Scanner
+            </button>
+          </div>
+        </div>
+
+        <!-- Score Cards -->
+        <div class="score-cards-grid" id="quality-scores-row">
+          <div class="score-card main-score">
+            <span class="score-card-label">Overall Trust Index</span>
+            <h2 id="score-overall">— / 100</h2>
+            <div class="score-bar"><div class="score-bar-fill" id="bar-overall" style="width:0%"></div></div>
+          </div>
+          <div class="score-card">
+            <span class="score-card-label">Missing Data</span>
+            <h3 id="score-missing">— / 100</h3>
+            <div class="score-bar"><div class="score-bar-fill" id="bar-missing" style="width:0%"></div></div>
+          </div>
+          <div class="score-card">
+            <span class="score-card-label">Duplicates</span>
+            <h3 id="score-duplicate">— / 100</h3>
+            <div class="score-bar"><div class="score-bar-fill" id="bar-duplicate" style="width:0%"></div></div>
+          </div>
+          <div class="score-card">
+            <span class="score-card-label">Temporal</span>
+            <h3 id="score-temporal">— / 100</h3>
+            <div class="score-bar"><div class="score-bar-fill" id="bar-temporal" style="width:0%"></div></div>
+          </div>
+          <div class="score-card">
+            <span class="score-card-label">Outliers</span>
+            <h3 id="score-outlier">— / 100</h3>
+            <div class="score-bar"><div class="score-bar-fill" id="bar-outlier" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Baseline + AI Tables -->
+      <div class="grid-2">
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon amber"><i class="fa-solid fa-list-check"></i></span>
+              <div>
+                <div class="card-title">Baseline Rule Flags</div>
+                <div class="card-subtitle">Deterministic hardcoded checks</div>
+              </div>
+            </div>
+            <span class="pill pill-grey" id="baseline-count">0 Flags</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="baseline-table">
+              <thead>
+                <tr><th>Table</th><th>Type</th><th>Detail</th></tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="3" class="empty-cell">Click 'Run Baseline' to inspect hardcoded rules.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon cyan"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+              <div>
+                <div class="card-title">AI Scanner Flags</div>
+                <div class="card-subtitle">Statistical anomaly detection</div>
+              </div>
+            </div>
+            <span class="pill pill-cyan" id="ai-count">0 Flags</span>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Min Confidence Threshold</span>
+              <span class="slider-val" id="conf-val">0.40</span>
+            </div>
+            <input type="range" id="conf-slider" min="0" max="1" step="0.05" value="0.40" class="styled-range">
+          </div>
+
+          <div id="ai-issue-cards-container" class="issue-cards-list">
+            <div class="empty-state" style="padding:20px 0">
+              <span class="empty-icon"><i class="fa-regular fa-circle-dot" style="font-size:1.8rem;color:var(--text-dim)"></i></span>
+              <p>Click 'Run AI Scanner' to inspect statistical flags.</p>
+            </div>
+          </div>
+
+          <div class="table-wrap mt-4" style="display:none" id="ai-table-wrap">
+            <table class="data-table" id="ai-table">
+              <thead>
+                <tr><th>Table</th><th>Type</th><th>Conf.</th><th>Detail</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <button id="btn-send-to-queue" class="btn btn-success btn-block mt-4">
+            <i class="fa-solid fa-share-nodes"></i> Route Flags to Human Review Queue
+          </button>
+        </div>
+      </div>
+
+      <!-- Clinical Impact Explainer -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon red"><i class="fa-solid fa-heart-pulse"></i></span>
+            <div>
+              <div class="card-title">Clinical &amp; Research Risk Explainer</div>
+              <div class="card-subtitle">AI-generated structured risk breakdown for every detected issue</div>
+            </div>
+          </div>
+          <span class="pill pill-amber" id="explainer-count">0 Issues</span>
+        </div>
+        <div id="clinical-explainer-container">
+          <div class="empty-state" style="padding:20px 0">
+            <span class="empty-icon"><i class="fa-solid fa-file-medical" style="font-size:2rem;color:var(--text-dim)"></i></span>
+            <p>Run the AI Scanner or Baseline checks above to view clinical risk explanations.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lab Distribution -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon purple"><i class="fa-solid fa-chart-area"></i></span>
+            <div>
+              <div class="card-title">Lab Value Explainability &amp; MAD Outlier Inspection</div>
+              <div class="card-subtitle">Per-lab-item median and median absolute deviation (MAD) statistical bounds</div>
+            </div>
+          </div>
+          <select id="lab-item-select" class="custom-select">
+            <option>Loading lab items…</option>
+          </select>
+        </div>
+
+        <div class="stats-row" style="margin-bottom:var(--s5)">
+          <div class="stat-card t-cyan">
+            <div class="stat-icon-box"><i class="fa-solid fa-wave-square"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Item Median</div>
+              <div class="stat-value" id="lab-median-val">0.00</div>
+            </div>
+          </div>
+          <div class="stat-card t-purple">
+            <div class="stat-icon-box"><i class="fa-solid fa-ruler-horizontal"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Median Abs. Dev (MAD)</div>
+              <div class="stat-value" id="lab-mad-val">0.00</div>
+            </div>
+          </div>
+          <div class="stat-card t-green">
+            <div class="stat-icon-box"><i class="fa-solid fa-vials"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Total Readings</div>
+              <div class="stat-value" id="lab-count-val">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-container h-320">
+          <canvas id="labChart"></canvas>
+        </div>
+      </div>
+
+    </section><!-- /tab-quality -->
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         TAB 3: HUMAN REVIEW WORKSPACE
+         ═══════════════════════════════════════════════════════ -->
+    <section id="tab-review" class="tab-pane">
+
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon green"><i class="fa-solid fa-user-check"></i></span>
+            <div>
+              <div class="card-title">Human-in-the-Loop Audit &amp; Review Workspace</div>
+              <div class="card-subtitle">Reversible human verification pipeline — absolute source data immutability</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Queue Stats -->
+        <div class="stats-row" style="margin-bottom:var(--s5)">
+          <div class="stat-card t-amber">
+            <div class="stat-icon-box"><i class="fa-solid fa-clock"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Pending Review</div>
+              <div class="stat-value" id="queue-pending-count">0</div>
+            </div>
+          </div>
+          <div class="stat-card t-green">
+            <div class="stat-icon-box"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Accepted Issues</div>
+              <div class="stat-value" id="queue-accepted-count">0</div>
+            </div>
+          </div>
+          <div class="stat-card t-red">
+            <div class="stat-icon-box"><i class="fa-solid fa-ban"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Rejected (False Positives)</div>
+              <div class="stat-value" id="queue-rejected-count">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+          <button class="filter-tab active" data-filter="all">All</button>
+          <button class="filter-tab" data-filter="pending">
+            <i class="fa-solid fa-clock"></i> Pending
+          </button>
+          <button class="filter-tab" data-filter="accepted">
+            <i class="fa-solid fa-check"></i> Accepted
+          </button>
+          <button class="filter-tab" data-filter="rejected">
+            <i class="fa-solid fa-xmark"></i> Rejected
+          </button>
+        </div>
+
+        <!-- Queue Container -->
+        <div id="queue-container">
+          <div class="empty-state">
+            <span class="empty-icon"><i class="fa-solid fa-folder-open"></i></span>
+            <p>No issues in review queue. Run the AI Scanner in the Quality Center tab and route flags here.</p>
+          </div>
+        </div>
+
+      </div>
+    </section><!-- /tab-review -->
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         TAB 4: BENCHMARK & EVALUATION
+         ═══════════════════════════════════════════════════════ -->
+    <section id="tab-evaluation" class="tab-pane">
+
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon cyan"><i class="fa-solid fa-chart-bar"></i></span>
+            <div>
+              <div class="card-title">Empirical Evaluation: AI Scanner vs. Deterministic Baseline</div>
+              <div class="card-subtitle">Performance benchmarks against ground-truth seeded data quality issues (Track 2 requirement)</div>
+            </div>
+          </div>
+          <button id="btn-run-eval" class="btn btn-primary">
+            <i class="fa-solid fa-gauge-high"></i> Run Live Evaluation
+          </button>
+        </div>
+
+        <div class="stats-row" style="margin-bottom:var(--s5)">
+          <div class="stat-card t-cyan">
+            <div class="stat-icon-box"><i class="fa-solid fa-bullseye"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Recall (Detection Rate)</div>
+              <div class="stat-value" id="eval-recall-val">—</div>
+              <div class="stat-sub" id="eval-recall-delta">vs Baseline: —</div>
+            </div>
+          </div>
+          <div class="stat-card t-purple">
+            <div class="stat-icon-box"><i class="fa-solid fa-crosshairs"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Precision Proxy</div>
+              <div class="stat-value" id="eval-precision-val">—</div>
+              <div class="stat-sub" id="eval-precision-delta">vs Baseline: —</div>
+            </div>
+          </div>
+          <div class="stat-card t-green">
+            <div class="stat-icon-box"><i class="fa-solid fa-star"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">F1 Score Proxy</div>
+              <div class="stat-value" id="eval-f1-val">—</div>
+              <div class="stat-sub" id="eval-f1-delta">vs Baseline: —</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon cyan"><i class="fa-solid fa-table"></i></span>
+              <div><div class="card-title">Performance Matrix</div></div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="eval-matrix-table">
+              <thead>
+                <tr>
+                  <th>Model / Scanner</th>
+                  <th>Flags Raised</th>
+                  <th>Recall</th>
+                  <th>Precision</th>
+                  <th>F1 Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="5" class="empty-cell">Click 'Run Live Evaluation' to compute benchmarks.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon amber"><i class="fa-solid fa-bullseye"></i></span>
+              <div>
+                <div class="card-title">Ground-Truth Seeded Issues</div>
+                <div class="card-subtitle">Documented benchmark error set (8 seeded anomalies)</div>
+              </div>
+            </div>
+            <button id="btn-toggle-json" class="btn btn-ghost btn-sm" style="font-size:0.75rem;">
+              <i class="fa-solid fa-code"></i> View Raw JSON
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="eval-seeds-table">
+              <thead>
+                <tr>
+                  <th>Target Table</th>
+                  <th>Seeded Issue Type</th>
+                  <th>Record Identifier</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="3" class="empty-cell">Click 'Run Live Evaluation' to inspect seeded errors.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <pre class="code-box hidden" id="eval-seeds-json" style="margin-top:12px;"></pre>
+        </div>
+      </div>
+
+    </section><!-- /tab-evaluation -->
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         TAB 5: REPORTS & INSIGHTS
+         ═══════════════════════════════════════════════════════ -->
+    <section id="tab-reports" class="tab-pane">
+
+      <!-- Executive Summary -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon cyan"><i class="fa-solid fa-file-chart-pie"></i></span>
+            <div>
+              <div class="card-title">Executive Summary Report</div>
+              <div class="card-subtitle">MIMIC-IV Data Quality Audit — AI-Powered Clinical Analytics Platform</div>
+            </div>
+          </div>
+          <button id="btn-download-pdf-reports" class="btn btn-danger">
+            <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+          </button>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <h3 style="font-size:1rem;margin-bottom:var(--s4);color:var(--text-secondary);font-weight:600;">Platform Overview</h3>
+            <p class="text-sm" style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--s4);">
+              The MIMIC-IV Cohort &amp; Data Quality Explorer is an explainable AI healthcare platform designed to surface 
+              hidden data quality issues in electronic health records before they bias downstream AI research models.
+            </p>
+            <p class="text-sm" style="color:var(--text-secondary);line-height:1.8;">
+              Using robust statistical methods (Median/MAD outlier detection, temporal consistency checks, and 
+              near-duplicate identification), the system identifies and prioritizes data quality risks with 
+              clinical context — enabling human reviewers to make informed decisions without altering source data.
+            </p>
+          </div>
+          <div>
+            <h3 style="font-size:1rem;margin-bottom:var(--s4);color:var(--text-secondary);font-weight:600;">Key Metrics Summary</h3>
+            <div id="reports-kpi-summary">
+              <div class="skeleton" style="height:20px;margin-bottom:8px;border-radius:4px;"></div>
+              <div class="skeleton" style="height:20px;margin-bottom:8px;border-radius:4px;width:80%;"></div>
+              <div class="skeleton" style="height:20px;margin-bottom:8px;border-radius:4px;width:90%;"></div>
+              <div class="skeleton" style="height:20px;border-radius:4px;width:70%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quality Score Breakdown -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon purple"><i class="fa-solid fa-chart-simple"></i></span>
+            <div>
+              <div class="card-title">Quality Score Breakdown</div>
+              <div class="card-subtitle">Component-level dataset health scores (0–100)</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="report-score-breakdown">
+          <div class="report-score-item">
+            <span class="report-score-label">Overall Trust</span>
+            <div class="report-score-bar"><div class="report-score-bar-fill" id="rep-bar-overall" style="width:0%"></div></div>
+            <span class="report-score-num" id="rep-score-overall">—</span>
+          </div>
+          <div class="report-score-item">
+            <span class="report-score-label">Missing Data</span>
+            <div class="report-score-bar"><div class="report-score-bar-fill" id="rep-bar-missing" style="width:0%"></div></div>
+            <span class="report-score-num" id="rep-score-missing">—</span>
+          </div>
+          <div class="report-score-item">
+            <span class="report-score-label">Duplicates</span>
+            <div class="report-score-bar"><div class="report-score-bar-fill" id="rep-bar-duplicate" style="width:0%"></div></div>
+            <span class="report-score-num" id="rep-score-duplicate">—</span>
+          </div>
+          <div class="report-score-item">
+            <span class="report-score-label">Temporal</span>
+            <div class="report-score-bar"><div class="report-score-bar-fill" id="rep-bar-temporal" style="width:0%"></div></div>
+            <span class="report-score-num" id="rep-score-temporal">—</span>
+          </div>
+          <div class="report-score-item">
+            <span class="report-score-label">Outliers</span>
+            <div class="report-score-bar"><div class="report-score-bar-fill" id="rep-bar-outlier" style="width:0%"></div></div>
+            <span class="report-score-num" id="rep-score-outlier">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon green"><i class="fa-solid fa-lightbulb"></i></span>
+            <div>
+              <div class="card-title">Recommendations</div>
+              <div class="card-subtitle">AI-generated actionable items based on detected issues</div>
+            </div>
+          </div>
+        </div>
+        <div id="recommendations-container">
+          <div class="rec-card">
+            <div class="rec-icon" style="background:var(--red-dim);color:var(--red)"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <div>
+              <div class="font-bold text-sm">Review Critical &amp; High Risk Issues First</div>
+              <div class="text-sm text-muted mt-3">Prioritize flags marked as Critical or High Risk in the AI Quality Center. These represent records most likely to bias downstream models.</div>
+            </div>
+          </div>
+          <div class="rec-card">
+            <div class="rec-icon" style="background:var(--amber-dim);color:var(--amber)"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <div>
+              <div class="font-bold text-sm">Address Temporal Inconsistencies</div>
+              <div class="text-sm text-muted mt-3">Temporal drift and overlapping admission windows can introduce systematic bias. Review flagged cases in the Review Workspace and document decisions.</div>
+            </div>
+          </div>
+          <div class="rec-card">
+            <div class="rec-icon" style="background:var(--purple-dim);color:var(--purple)"><i class="fa-solid fa-copy"></i></div>
+            <div>
+              <div class="font-bold text-sm">Investigate Near-Duplicate Records</div>
+              <div class="text-sm text-muted mt-3">Near-duplicate lab events within short time windows may represent measurement errors or data entry duplicates. Accept or reject in the Review Workspace.</div>
+            </div>
+          </div>
+          <div class="rec-card">
+            <div class="rec-icon" style="background:var(--cyan-dim);color:var(--cyan)"><i class="fa-solid fa-file-export"></i></div>
+            <div>
+              <div class="font-bold text-sm">Export Audit Report for Governance</div>
+              <div class="text-sm text-muted mt-3">Download the PDF audit report for documentation, peer review, and regulatory compliance. The report includes all detected issues and reviewer decisions.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section><!-- /tab-reports -->
+
+  </main><!-- /main-content -->
+</div><!-- /app-layout -->
+
+<script src="app.js"></script>
+</body>
+</html>
